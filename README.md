@@ -59,4 +59,16 @@ Safety / behaviour notes:
   Crisp sub-100 ms switching needs an external MOSFET on the output or the
   device's native sequence feature — not this tool.
 
-Protocol verified against [palzhj/pydp100](https://github.com/palzhj/pydp100).
+### Credits
+
+The DP100 USB-HID protocol (opcodes, frame layout, CRC parameters, field
+offsets) was reverse-engineered by the community. This tool's understanding of
+it comes primarily from **[palzhj/pydp100](https://github.com/palzhj/pydp100)** —
+thanks to the author for documenting it.
+
+`dp100_pulse.py` is an independent implementation, not a copy: pydp100 carries no
+license, so its code was not reused. Only the protocol facts (which describe
+Alientek's hardware, not pydp100's code) informed this re-implementation. The
+output regulation modes and `work_st` protection-status values (NM/OVP/OCP/OPP/
+OTP/UVP/REP) come from the [Alientek DP100 user
+manual](https://manuals.plus/alientek/dp100-high-performance-digital-power-manual).

@@ -4,12 +4,15 @@
 Cycles the DP100 output on/off at a fixed voltage/current to power-cycle a
 device under test (DUT). Communicates over USB HID (VID 0x2e3c / PID 0xaf01).
 
-This is standalone bench tooling — not part of the firmware build. Relocate it
-out of scripts/ if you'd rather keep it separate.
-
-Protocol (verified against github.com/palzhj/pydp100):
+Protocol layout:
   64-byte HID reports, frame = [DIR][OP][0x00][LEN][DATA...][CRC16-lo][CRC16-hi]
   CRC-16/Modbus (poly 0x8005, refin/refout, init 0xFFFF). All values little-endian, mV / mA.
+
+Credits: the DP100 protocol was reverse-engineered by the community; this code's
+understanding of it comes mainly from github.com/palzhj/pydp100 (which carries no
+license — its code was not reused, only the protocol facts). work_st/out_mode
+values are from the Alientek DP100 user manual. This is an independent
+implementation. See README "Credits".
 
 TIMING FLOOR: host-toggled USB HID gives ~50-100 ms per edge with jitter. This
 tool is intended for edges >= ~0.5 s (power-cycle / reboot / brownout testing).
