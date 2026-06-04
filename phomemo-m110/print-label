@@ -1,0 +1,29 @@
+#!/bin/sh
+# Print a label image to the Phomemo M110 over USB.
+# Usage: print-label <image.png|image.svg> [extra args for phomemo_m110_print.py]
+#   e.g. print-label label.png                       (40x30 defaults: align right, speed 2, density 2)
+#        print-label label.svg --width 50 --height 30 (Expanded size)
+#        print-label label.png --xoff 10              (nudge right 10 dots / ~1.25mm)
+#        print-label label.png --density 4            (darker, if a label looks faint)
+set -e
+[ -n "$1" ] || { echo "usage: print-label <image> [opts]"; exit 1; }
+IMG="$1"; shift
+
+# locate the converter next to this script, regardless of cwd / symlink
+DIR=$(cd "$(dirname "$(readlink -f "$0")")" && pwd)
+CONV="$DIR/phomemo_m110_print.py"
+
+BIN=/tmp/label_m110.bin
+PREVIEW=/tmp/label_preview.png
+DEV=/dev/usb/lp0
+
+python3 "$CONV" "$IMG" -o "$BIN" --preview "$PREVIEW" "$@"
+
+if [ -w "$DEV" ]; then
+    cat "$BIN" > "$DEV"
+else
+    [ -x /tmp/askpass.sh ] || printf '#!/bin/sh\nexec zenity --password --title="sudo: Phomemo M110"\n' > /tmp/askpass.sh
+    chmod +x /tmp/askpass.sh
+    SUDO_ASKPASS=/tmp/askpass.sh sudo -A sh -c "cat '$BIN' > $DEV"
+fi
+echo "printed: $IMG  (preview: $PREVIEW)"

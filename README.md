@@ -11,6 +11,7 @@ tool as they grow.
 | Path | Instrument | What it does |
 |------|------------|--------------|
 | [`dp100/dp100_pulse.py`](dp100/dp100_pulse.py) | Alientek DP100 PSU | Pulse the output on/off to power-cycle a device under test |
+| [`phomemo-m110/print-label`](phomemo-m110/print-label) | Phomemo M110(S) label printer | Print a PNG/SVG label (e.g. filament spool labels) over USB |
 
 ## Setup
 
@@ -72,3 +73,57 @@ Alientek's hardware, not pydp100's code) informed this re-implementation. The
 output regulation modes and `work_st` protection-status values (NM/OVP/OCP/OPP/
 OTP/UVP/REP) come from the [Alientek DP100 user
 manual](https://manuals.plus/alientek/dp100-high-performance-digital-power-manual).
+
+## Phomemo M110 label printer
+
+There is no official Phomemo Linux driver. `phomemo_m110_print.py` converts an
+image to the M110's raster format and writes it to the printer; `print-label` is
+a thin wrapper that runs the converter and sends the bytes to the device. Built
+for printing filament spool labels from
+[3dfilamentprofiles.com](https://3dfilamentprofiles.com) (export as PNG or SVG).
+
+```bash
+cd phomemo-m110
+
+# 40x30 mm label, tuned defaults (align right, speed 2, density 2)
+./print-label ~/Downloads/some-label.png      # PNG or SVG
+
+# other sizes from the site:
+./print-label label.png --width 50 --height 30   # Expanded
+./print-label label.png --width 30 --height 40   # Vertical
+./print-label label.png --width 40 --height 12   # Slim
+
+./phomemo_m110_print.py --help
+```
+
+Connection / setup:
+
+- USB device `0483:5740` (Jieli chip) appears as `/dev/usb/lp0` via the `usblp`
+  kernel module; CUPS' usb backend sees it as `usb:///M110S`.
+- Writing the device needs group `lp`: `sudo usermod -aG lp $USER`, then log out
+  and back in. Until then `print-label` falls back to `sudo` (askpass).
+- SVG input is rasterized with `rsvg-convert` straight onto the 320-dot grid
+  (`sudo dnf install librsvg2-tools`). SVG and PNG output are virtually identical
+  in practice — the 203 dpi thermal head is the limiter, not the source.
+
+Tuning notes (this unit, cheap label stock):
+
+- **Media is right-referenced** (label's right edge = head's rightmost), so the
+  default is `--align right`. `--xoff <dots>` nudges (8 dots = 1 mm).
+- The head is 48 bytes / 384 dots / 48 mm wide; a 40 mm label uses the rightmost
+  320 dots.
+- Hard threshold (no dithering) keeps the QR code scannable — important.
+- Counter-intuitively this unit prints **cleanest at low heat**: large solid
+  fills bleed at high energy. Stepping density down 8 → 1 kept improving; the
+  defaults `--speed 2 --density 2` settled as the sweet spot. Density 0 is
+  "off/default", not lighter, and speed 1 is the slowest.
+- A blotch always in the same spot is usually print-head residue — wipe the head
+  with isopropyl alcohol (printer off, head cool).
+
+### Credits
+
+M110 raster protocol (init/density/speed bytes, the `GS v 0` raster command, and
+the trailing feed) from
+[vivier/phomemo-tools](https://github.com/vivier/phomemo-tools), a community CUPS
+driver — thanks to the author for documenting it. `phomemo_m110_print.py` is an
+independent standalone implementation using those protocol facts.
