@@ -96,6 +96,21 @@ cd phomemo-m110
 ./phomemo_m110_print.py --help
 ```
 
+### Dolphin right-click (KDE)
+
+To print without the terminal: download the label, right-click it in Dolphin →
+**Print label (Phomemo M110)** (shows for PNG/SVG; pops a desktop notification on
+success/failure). Install the service menu once:
+
+```bash
+cp phomemo-m110/print-label-m110.desktop ~/.local/share/kio/servicemenus/
+chmod +x ~/.local/share/kio/servicemenus/print-label-m110.desktop
+kbuildsycoca6   # refresh Dolphin's menu cache
+```
+
+The `.desktop` calls `print-label-gui` by absolute path; edit that path if you
+clone elsewhere. Remove the file (and re-run `kbuildsycoca6`) to uninstall.
+
 Connection / setup:
 
 - USB device `0483:5740` (Jieli chip) appears as `/dev/usb/lp0` via the `usblp`

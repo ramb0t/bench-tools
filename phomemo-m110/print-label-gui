@@ -1,0 +1,13 @@
+#!/bin/sh
+# GUI entry point for the Dolphin right-click "Print label" action.
+# Prints each file passed as an argument with print-label, then shows a
+# desktop notification (there's no terminal to read when launched from a menu).
+DIR=$(cd "$(dirname "$(readlink -f "$0")")" && pwd)
+for f in "$@"; do
+    name=$(basename "$f")
+    if "$DIR/print-label" "$f" >/dev/null 2>&1; then
+        notify-send -i document-print "Label printed" "$name"
+    else
+        notify-send -u critical -i dialog-error "Label print failed" "$name"
+    fi
+done

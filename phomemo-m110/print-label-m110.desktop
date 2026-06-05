@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Phomemo M110 label
+MimeType=image/png;image/svg+xml;
+Actions=printLabelM110;
+
+[Desktop Action printLabelM110]
+Name=Print label (Phomemo M110)
+Icon=document-print
+Exec=/home/ben/Dev/Lab/bench-tools/phomemo-m110/print-label-gui %F
