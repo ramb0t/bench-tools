@@ -19,11 +19,23 @@ DEV=/dev/usb/lp0
 
 python3 "$CONV" "$IMG" -o "$BIN" --preview "$PREVIEW" "$@"
 
+# Write with a timeout: a sleeping/off M110 accepts no data and the write blocks
+# forever, wedging /dev/usb/lp0 for everyone. Fail fast instead. (dd is the writer
+# process so `timeout` can actually kill it.)
+st=0
 if [ -w "$DEV" ]; then
-    cat "$BIN" > "$DEV"
+    timeout 20 dd if="$BIN" of="$DEV" bs=64k status=none || st=$?
 else
     [ -x /tmp/askpass.sh ] || printf '#!/bin/sh\nexec zenity --password --title="sudo: Phomemo M110"\n' > /tmp/askpass.sh
     chmod +x /tmp/askpass.sh
-    SUDO_ASKPASS=/tmp/askpass.sh sudo -A sh -c "cat '$BIN' > $DEV"
+    SUDO_ASKPASS=/tmp/askpass.sh sudo -A timeout 20 dd if="$BIN" of="$DEV" bs=64k status=none || st=$?
+fi
+
+if [ "$st" -eq 124 ]; then
+    echo "ERROR: write to $DEV timed out — is the M110 powered on with a steady LED? It auto-sleeps; press its power button and retry." >&2
+    exit 1
+elif [ "$st" -ne 0 ]; then
+    echo "ERROR: failed writing to $DEV (exit $st)." >&2
+    exit 1
 fi
 echo "printed: $IMG  (preview: $PREVIEW)"
