@@ -34,7 +34,15 @@ import signal
 import sys
 import time
 
-import hid
+# cython-hidapi's `hid` is libusb-backed on Linux (Debian, PyPI), which needs the raw
+# USB node and detaches the kernel driver; its `hidraw` module uses /dev/hidraw*.
+try:
+    import hidraw as hid
+except ImportError:
+    try:
+        import hid
+    except ImportError:
+        sys.exit("error: missing dependency 'hidapi' (pip install hidapi)")
 
 try:
     import crcmod

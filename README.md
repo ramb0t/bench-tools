@@ -16,14 +16,21 @@ tool as they grow.
 ## Setup
 
 ```bash
-pip install -r requirements.txt   # hid (cython-hidapi) + crcmod
+pip install -r requirements.txt   # hidapi (cython-hidapi) + crcmod + Pillow
 ```
+
+The PyPI package is `hidapi`; the unrelated PyPI `hid` package has a different API
+and won't work. On Debian / Raspberry Pi OS use the distro packages instead:
+`sudo apt install python3-hid python3-crcmod`.
 
 ### USB permissions (Linux)
 
 Most tools talk to USB-HID instruments via `hidraw`. On a desktop session your
 logged-in seat usually gets an ACL automatically. For headless/cron use, or if
-you hit a permission error, install the relevant udev rule and replug:
+you hit a permission error, install the relevant udev rule and replug. The DP100
+rule covers both the hidraw node and the raw USB node, since a libusb-backed `hid`
+module opens the latter. On a shared host, prefer `GROUP="plugdev", MODE="0660"`
+over the rule's `0666`.
 
 ```bash
 sudo cp dp100/99-atk-dp100.rules /etc/udev/rules.d/
@@ -55,6 +62,10 @@ Safety / behaviour notes:
   trip (OVP/OCP/OPP/OTP/UVP/REP) auto-disables the output and the tool stops so
   the run doesn't log phantom pulses. Normal (NM) and CC current-limiting are
   not treated as trips.
+- **Output ceiling:** buck-only, so Vout max sits about 0.4 V under Vin (12.07 V
+  in gave an 11.70 V ceiling). On USB-C the DP100 takes the highest PD/QC voltage
+  the charger offers, so a 20 V PD charger lifts the ceiling to about 19.5 V;
+  above 20 V needs the DC input ([manual](https://akizukidenshi.com/goodsaffix/DP100_manual.pdf)).
 - **Timing floor:** host-toggled USB HID gives ~50–100 ms per edge with jitter.
   This tool is for edges ≥ ~0.5 s (power-cycle / reboot / brownout testing).
   Crisp sub-100 ms switching needs an external MOSFET on the output or the

@@ -1,1 +1,3 @@
+# Alientek DP100. hidraw for the hidraw backend; the usb line for libusb-backed `hid`.
 KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="2e3c", ATTRS{idProduct}=="af01", MODE="0666"
+SUBSYSTEM=="usb", ATTR{idVendor}=="2e3c", ATTR{idProduct}=="af01", MODE="0666"
